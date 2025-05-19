@@ -4,7 +4,10 @@ import com.mojang.logging.LogUtils;
 import dev.jaronline.simplyhopper.block.BlockRegistry;
 import dev.jaronline.simplyhopper.block.entity.BlockEntityRegistry;
 import dev.jaronline.simplyhopper.gui.CreativeTabRegistry;
+import dev.jaronline.simplyhopper.gui.MenuTypeRegistry;
 import dev.jaronline.simplyhopper.item.ItemRegistry;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -29,6 +32,7 @@ public class SimplyHopper {
         BlockEntityRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
         CreativeTabRegistry.register(modEventBus);
+        MenuTypeRegistry.register(modEventBus);
 
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -42,8 +46,12 @@ public class SimplyHopper {
         LOGGER.info("Server starting");
     }
 
-    @SubscribeEvent
-    public static void onClientSetup(final FMLClientSetupEvent event) {
-        LOGGER.info("Client setup");
+    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ClientModEvents {
+        @SubscribeEvent
+        public static void onClientSetup(final FMLClientSetupEvent event) {
+            LOGGER.info("Client setup");
+            event.enqueueWork(MenuTypeRegistry::registerScreens);
+        }
     }
 }
