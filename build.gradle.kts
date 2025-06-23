@@ -66,7 +66,7 @@ minecraft {
     // When true, this property will add the folder name of all declared run configurations to generated IDE run configurations.
     // The folder name can be set on a run configuration using the "folderName" property.
     // By default, the folder name of a run configuration is the name of the Gradle project containing it.
-    // generateRunFolders = true
+     generateRunFolders = true
 
     // This property enables access transformers for use in development.
     // They will be applied to the Minecraft artifact.
