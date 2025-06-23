@@ -35,21 +35,20 @@ public class SimplyHopperBlock extends HopperBlock {
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, @NotNull BlockState pState, @NotNull BlockEntityType<T> pBlockEntityType) {
-        if (pLevel.isClientSide()) {
-            return null;
-        }
-
-        return createTickerHelper(pBlockEntityType, BlockEntityRegistry.SIMPLY_HOPPER_BLOCK_ENTITY.get(),
-                SimplyHopperBlockEntity::pushItemsTick);
+        return pLevel.isClientSide ? null : createTickerHelper(pBlockEntityType, BlockEntityRegistry.SIMPLY_HOPPER_BLOCK_ENTITY.get(), SimplyHopperBlockEntity::serverTick);
     }
 
     @Override
-    public void entityInside(@NotNull BlockState pState, Level pLevel, @NotNull BlockPos pPos, @NotNull Entity pEntity) {
-        BlockEntity blockentity = pLevel.getBlockEntity(pPos);
-        if (blockentity instanceof SimplyHopperBlockEntity) {
-            SimplyHopperBlockEntity.entityInside(pLevel, pPos, pState, pEntity, (SimplyHopperBlockEntity) blockentity);
+    public @NotNull InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
+        if (!pLevel.isClientSide) {
+            BlockEntity be = pLevel.getBlockEntity(pPos);
+            if (be instanceof SimplyHopperBlockEntity hopper) {
+                pPlayer.openMenu(hopper);
+                pPlayer.awardStat(Stats.INSPECT_HOPPER);
+            }
+            return InteractionResult.CONSUME;
         }
-
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -57,7 +56,7 @@ public class SimplyHopperBlock extends HopperBlock {
         if (!pState.is(pNewState.getBlock())) {
             BlockEntity blockentity = pLevel.getBlockEntity(pPos);
             if (blockentity instanceof SimplyHopperBlockEntity) {
-                Containers.dropContents(pLevel, pPos, (SimplyHopperBlockEntity) blockentity);
+                Containers.dropContents(pLevel, pPos, (SimplyHopperBlockEntity)blockentity);
                 pLevel.updateNeighbourForOutputSignal(pPos, this);
             }
 
@@ -66,31 +65,21 @@ public class SimplyHopperBlock extends HopperBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState pState, Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
-        if (pLevel.isClientSide) {
-            return InteractionResult.SUCCESS;
-        } else {
-            BlockEntity blockentity = pLevel.getBlockEntity(pPos);
-            if (blockentity instanceof SimplyHopperBlockEntity) {
-                pPlayer.openMenu((SimplyHopperBlockEntity) blockentity);
-                pPlayer.awardStat(Stats.INSPECT_HOPPER);
-            }
-
-            return InteractionResult.CONSUME;
-        }
-    }
-
-
-    /**
-     * Called by BlockItem after this block has been placed.
-     */
-    @Override
-    public void setPlacedBy(@NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull BlockState pState, @NotNull LivingEntity pPlacer, ItemStack pStack) {
+    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, LivingEntity pPlacer, ItemStack pStack) {
         if (pStack.hasCustomHoverName()) {
             BlockEntity blockentity = pLevel.getBlockEntity(pPos);
             if (blockentity instanceof SimplyHopperBlockEntity) {
-                ((SimplyHopperBlockEntity) blockentity).setCustomName(pStack.getHoverName());
+                ((SimplyHopperBlockEntity)blockentity).setCustomName(pStack.getHoverName());
             }
+        }
+
+    }
+
+    @Override
+    public void entityInside(BlockState pState, Level pLevel, BlockPos pPos, Entity pEntity) {
+        BlockEntity blockentity = pLevel.getBlockEntity(pPos);
+        if (blockentity instanceof SimplyHopperBlockEntity) {
+            SimplyHopperBlockEntity.entityInside(pLevel, pPos, pState, pEntity, (SimplyHopperBlockEntity)blockentity);
         }
 
     }
