@@ -1,4 +1,5 @@
 {
+  "parent": "minecraft:block/hopper",
   "variants": {
     "": { "model": "minecraft:block/hopper" }
   }

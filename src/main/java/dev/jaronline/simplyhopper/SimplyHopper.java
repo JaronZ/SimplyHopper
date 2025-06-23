@@ -7,6 +7,8 @@ import dev.jaronline.simplyhopper.gui.CreativeTabRegistry;
 import dev.jaronline.simplyhopper.gui.MenuTypeRegistry;
 import dev.jaronline.simplyhopper.item.ItemRegistry;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.world.level.block.DoubleBlockCombiner;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -32,7 +34,7 @@ public class SimplyHopper {
         BlockEntityRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
         CreativeTabRegistry.register(modEventBus);
-        MenuTypeRegistry.register(modEventBus);
+//        MenuTypeRegistry.register(modEventBus);
 
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -51,7 +53,7 @@ public class SimplyHopper {
         @SubscribeEvent
         public static void onClientSetup(final FMLClientSetupEvent event) {
             LOGGER.info("Client setup");
-            event.enqueueWork(MenuTypeRegistry::registerScreens);
+//            event.enqueueWork(MenuTypeRegistry::registerScreens);
         }
     }
 }

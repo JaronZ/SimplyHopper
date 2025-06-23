@@ -19,16 +19,16 @@ public class MenuTypeRegistry {
     private static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(
             ForgeRegistries.MENU_TYPES, SimplyHopper.MOD_ID);
 
-    public static final RegistryObject<MenuType<SimplyHopperMenu>> SIMPLY_HOPPER_MENU = registerMenuType(
-            "simply_hopper_menu", SimplyHopperMenu::new);
+//    public static final RegistryObject<MenuType<SimplyHopperMenu>> SIMPLY_HOPPER_MENU = registerMenuType(
+//            "simply_hopper_menu", SimplyHopperMenu::new);
 
     public static void register(IEventBus eventBus) {
         MENU_TYPES.register(eventBus);
     }
 
-    public static void registerScreens() {
-        MenuScreens.register(SIMPLY_HOPPER_MENU.get(), SimplyHopperScreen::new);
-    }
+//    public static void registerScreens() {
+//        MenuScreens.register(SIMPLY_HOPPER_MENU.get(), SimplyHopperScreen::new);
+//    }
 
     private static <T extends AbstractContainerMenu, U extends Screen & MenuAccess<T>> RegistryObject<MenuType<T>> registerMenuType(
             String name, IContainerFactory<T> menuFactory) {
