@@ -133,7 +133,13 @@ minecraft {
     }
 }
 
-sourceSets["main"].resources.srcDir("src/generated/resources")
+sourceSets {
+    main {
+        resources {
+            srcDir("src/generated/resources")
+        }
+    }
+}
 
 repositories {
     // Put repositories for dependencies here
@@ -230,4 +236,15 @@ tasks.named<Jar>("jar") {
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8" // Use the UTF-8 charset for Java compilation
+}
+
+tasks.withType<JavaExec>().configureEach {
+
+    if (name == "data") {
+        outputs.upToDateWhen { false } // always regenerate data
+    }
+}
+
+tasks.withType<Copy>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
