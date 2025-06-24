@@ -18,9 +18,9 @@ public class CreativeTabRegistry {
         CREATIVE_MODE_TABS.register(
             "simply_hopper_tab", () -> CreativeModeTab.builder()
                         .title(Component.translatable("itemGroup.simply_hopper"))
-                        .icon(() -> BlockRegistry.SIMPLE_HOPPER_BLOCK.getBlockItem().getDefaultInstance())
+                        .icon(() -> BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem().getDefaultInstance())
                         .displayItems((parameters, output) -> {
-                            output.accept(BlockRegistry.SIMPLE_HOPPER_BLOCK.getBlockItem());
+                            output.accept(BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem());
                         })
                         .build());
     }
@@ -32,6 +32,6 @@ public class CreativeTabRegistry {
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS)
-            event.accept(BlockRegistry.SIMPLE_HOPPER_BLOCK.getBlockItem());
+            event.accept(BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem());
     }
 }
