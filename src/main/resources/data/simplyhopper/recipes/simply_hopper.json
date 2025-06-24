@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "group": "simply_hopper",
+  "pattern": [
+    "141",
+    "323",
+    " 1 "
+  ],
+  "key": {
+    "1": {
+      "item": "minecraft:iron_ingot"
+    },
+    "2": {
+      "item": "minecraft:hopper"
+    },
+    "3": {
+      "item": "minecraft:copper_ingot"
+    },
+    "4": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "simplyhopper:simply_hopper"
+  },
+  "show_notification": true
+}
