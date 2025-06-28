@@ -73,13 +73,12 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         // This is so the simplyhopper can be used to filter from other simplyhoppers.
         // This is so the inventory updates correctly and remains the correct amount of items, needed for the filter.
 
+        --hopper.cooldownTime;
         hopper.tickedGameTime = level.getGameTime();
-        if (hopper.isOnCooldown()) {
-            --hopper.cooldownTime;
-            return;
+        if (!hopper.isOnCooldown()) {
+            hopper.setCooldown(0);
+            tryMoveItems(level, pos, state, hopper, () -> tryPullItems(level,hopper));
         }
-
-        tryMoveItems(level, pos, state, hopper, () -> tryPullItems(level,hopper));
     }
 
     private static void tryMoveItems(Level pLevel, BlockPos pPos, BlockState pState, SimplyHopperBlockEntity pBlockEntity, BooleanSupplier pValidator) {
