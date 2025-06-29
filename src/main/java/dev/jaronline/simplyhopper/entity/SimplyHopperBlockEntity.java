@@ -56,7 +56,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
     private long tickedGameTime;
 
     public SimplyHopperBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntityRegistry.SIMPLY_HOPPER_BLOCK_ENTITY.get(),pos, state);
+        super(BlockEntityRegistry.SIMPLY_HOPPER_BLOCK_ENTITY.get(), pos, state);
     }
 
     /**
@@ -65,28 +65,18 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
     public static void serverTick(Level level, BlockPos pos, BlockState state, SimplyHopperBlockEntity hopper) {
         if (level.isClientSide) return;
 
-        // TODO: Fix this hopper can do push and pull at the same time.
-        // TODO: Fix this hopper will pull first and push last if simply hopper is above.
-        // TODO: Fix this hopper will pull last and push first if hopper (vanilla/custom) above has output direction towards this hopper.
-
-        // This is so it will act the same as a vanilla hopper.
-        // This is so the simplyhopper can be used to filter from other simplyhoppers.
-        // This is so the inventory updates correctly and remains the correct amount of items, needed for the filter.
-
         --hopper.cooldownTime;
         hopper.tickedGameTime = level.getGameTime();
         if (!hopper.isOnCooldown()) {
             hopper.setCooldown(0);
-            tryMoveItems(level, pos, state, hopper, () -> tryPullItems(level,hopper));
+            tryMoveItems(level, pos, state, hopper, () -> tryPullItems(level, hopper));
         }
     }
 
     private static void tryMoveItems(Level pLevel, BlockPos pPos, BlockState pState, SimplyHopperBlockEntity pBlockEntity, BooleanSupplier pValidator) {
-        if (pLevel.isClientSide) {return;}
-
-        // TODO: Fix this hopper can do push and pull at the same time.
-        // TODO: Fix this hopper will pull first and push last if simply hopper is above.
-        // TODO: Fix this hopper will pull last and push first if hopper (vanilla/custom) above has output direction towards this hopper.
+        if (pLevel.isClientSide) {
+            return;
+        }
 
         if (!pBlockEntity.isOnCooldown() && pState.getValue(HopperBlock.ENABLED)) {
             boolean flag = false;
@@ -97,35 +87,6 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
             if (!pBlockEntity.inventoryFull()) {
                 flag |= pValidator.getAsBoolean();
             }
-
-//            if(getSourceContainer(pLevel, pBlockEntity) instanceof HopperBlockEntity sourceHopper) {
-//                if(sourceHopper.getBlockState().getValue(HopperBlock.FACING) == Direction.DOWN) {
-//                    if (!pBlockEntity.isEmpty()) {
-//                        flag = tryPushItems(pLevel, pBlockEntity);
-//                    }
-//                    if (!pBlockEntity.inventoryFull()) {
-//                        flag |= pValidator.getAsBoolean();
-//                    }
-//                }
-//                else{
-//                    if (!pBlockEntity.inventoryFull()) {
-//                        flag |= pValidator.getAsBoolean();
-//                    }
-//
-//                    if (!pBlockEntity.isEmpty()) {
-//                        flag = tryPushItems(pLevel, pBlockEntity);
-//                    }
-//                }
-//            }
-//            else{
-//                if (!pBlockEntity.isEmpty()) {
-//                    flag = tryPushItems(pLevel, pBlockEntity);
-//                }
-//
-//                if (!pBlockEntity.inventoryFull()) {
-//                    flag |= pValidator.getAsBoolean();
-//                }
-//            }
 
             if (flag) {
                 pBlockEntity.setCooldown(8);
@@ -139,48 +100,67 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         return 2; // Minimum stack size to consider for pushing
     }
 
+    private static BlockEntity getContainerAttached(Level level, SimplyHopperBlockEntity hopper) {
+        Direction outDir = hopper.getBlockState().getValue(HopperBlock.FACING);
+        BlockPos outPos = hopper.getBlockPos().relative(outDir);
+
+        return level.getBlockEntity(outPos);
+    }
+
     /**
      * PUSH logic: only push out items if there's more than one
      */
     private static boolean tryPushItems(Level level, SimplyHopperBlockEntity hopper) {
-        Direction outDir = hopper.getBlockState().getValue(HopperBlock.FACING);
-        BlockPos outPos = hopper.getBlockPos().relative(outDir);
-        BlockEntity targetBE = level.getBlockEntity(outPos);
+        BlockEntity targetAttached = getContainerAttached(level, hopper);
+        Container targetBelow = getContainerBelow(level, hopper);
 
-        LOGGER.info("Trying to push items from {} to {}", hopper.getBlockPos(), outPos);
-        System.out.println("Trying to push items from "+  hopper.getBlockPos()+" to "+outPos);
-        if (targetBE == null) {
-            LOGGER.warn("No target block entity found at {}", outPos);
+        if (targetAttached == null) {
             return false;
         }
-        if (targetBE instanceof Container targetInv) {
+
+        if (targetAttached instanceof Container targetInv) {
             for (int slot = 0; slot < hopper.getContainerSize(); slot++) {
                 ItemStack stackInSlot = hopper.getItem(slot);
 
-                LOGGER.info("Checking slot {}: {}, and if it is > {}", slot, stackInSlot, hopper.getMinimalStackSize());
-                System.out.println("Checking slot "+slot+": "+stackInSlot+", and if it is > "+hopper.getMinimalStackSize());
+                if (stackInSlot.isEmpty() || stackInSlot.getCount() < hopper.getMinimalStackSize()) {
+                    continue; // Skip empty slots or stacks smaller than the minimum size
+                }
 
-                LOGGER.info(targetBE instanceof SimplyHopperBlockEntity ? "Target is a Simply Hopper" : "Target is a regular container");
-                System.out.println(targetBE instanceof SimplyHopperBlockEntity ? "Target is a Simply Hopper" : "Target is a regular container");
+                if (targetBelow instanceof SimplyHopperBlockEntity simplyHopperBelow) {
+                    boolean matchFound = false;
+                    for (int slotIndexContainerBelow = 0; slotIndexContainerBelow < targetBelow.getContainerSize(); slotIndexContainerBelow++) {
+                        ItemStack stack = simplyHopperBelow.getItem(slotIndexContainerBelow);
+                        if (matchFound) {
+                            continue;
+                        }
+                        if (!stack.isEmpty() && ItemStack.isSameItemSameTags(stack, stackInSlot)) {
+                            matchFound = true;
+                        }
+                    }
+                    if (matchFound) {
+                        continue;
+                    }
+                }
 
-//                if (targetBE instanceof SimplyHopperBlockEntity otherSimplyHopper) {
-//                    // If the target is another Simply Hopper, we can only push items that match existing contents
-//                    if (!otherSimplyHopper.canPlaceItem(stackInSlot)) {
-//                        continue; // Skip if the item doesn't match
-//                    }
-//                }
+                if (targetAttached instanceof SimplyHopperBlockEntity simplyHopperAttached) {
+                    boolean matchFound = false;
+                    for (int slotIndexContainerAttached = 0; slotIndexContainerAttached < simplyHopperAttached.getContainerSize(); slotIndexContainerAttached++) {
+                        ItemStack stack = simplyHopperAttached.getItem(slotIndexContainerAttached);
+                        if (matchFound) {
+                            continue;
+                        }
+                        if (!stack.isEmpty() && ItemStack.isSameItemSameTags(stack, stackInSlot)) {
+                            matchFound = true;
+                        }
+                    }
+                }
 
-                if (!stackInSlot.isEmpty() && targetInv.canTakeItem(hopper,slot,stackInSlot) && stackInSlot.getCount() >= hopper.getMinimalStackSize()) {
+                if (!stackInSlot.isEmpty() && stackInSlot.getCount() >= hopper.getMinimalStackSize()) {
                     ItemStack toTransfer = stackInSlot.copy();
                     toTransfer.setCount(1);
 
-                    LOGGER.info("Attempting to transfer {} to {}", toTransfer, targetInv);
-                    System.out.println("Attempting to transfer "+toTransfer+" to "+targetInv);
-
-                    ItemStack remaining = addItem(hopper, targetInv, toTransfer, outDir.getOpposite());
+                    ItemStack remaining = addItem(hopper, targetInv, toTransfer, hopper.getBlockState().getValue(HopperBlock.FACING).getOpposite());
                     if (remaining.isEmpty()) {
-                        LOGGER.info("Successfully transferred {} to {}", toTransfer, targetInv);
-                        System.out.println("Successfully transferred "+toTransfer+" to "+targetInv);
                         stackInSlot.shrink(1);
                         hopper.setChanged();
                         return true;
@@ -192,6 +172,12 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         return false;
     }
 
+    @Override
+    public @NotNull ItemStack getItem(int pIndex) {
+        this.unpackLootTable((Player) null);
+        return this.getItems().get(pIndex);
+    }
+
     /**
      * PULL logic: only pull items that match existing contents
      */
@@ -199,9 +185,6 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         if (hopper.isOnCooldown() || hopper.inventoryFull()) {
             return false; // Don't pull if on cooldown or inventory is full
         }
-
-        LOGGER.debug("Trying to pull items from source container at {}", hopper.getBlockPos());
-        System.out.println("Trying to pull items from source container at "+hopper.getBlockPos());
 
         Container source = SimplyHopperBlockEntity.getSourceContainer(level, hopper);
         if (source == null) {
@@ -211,19 +194,32 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
 
         Direction pullDir = Direction.DOWN;
 
-        if(!source.hasAnyMatching(stack -> !stack.isEmpty())) {
-            return false; // No items to pull
-        }
-
         for (int slot = 0; slot < source.getContainerSize(); slot++) {
             ItemStack stackInSource = source.getItem(slot);
 
-            if (!stackInSource.isEmpty() && hopper.canPlaceItem(stackInSource) && source.canTakeItem(hopper, slot, stackInSource)) {
+            if (source instanceof SimplyHopperBlockEntity simplyHopperSource) {
+                if (stackInSource.isEmpty()) {
+                    continue;
+                }
+
+                for (int thisSlot = 0; thisSlot < hopper.getContainerSize(); thisSlot++) {
+                    ItemStack stack = hopper.getItem(thisSlot);
+
+                    if (!stack.isEmpty() && ItemStack.isSameItemSameTags(stack, stackInSource) && stack.getCount() < stack.getMaxStackSize() && stackInSource.getCount() >= simplyHopperSource.getMinimalStackSize()) {
+                        ItemStack toTransfer = stackInSource.copy();
+                        toTransfer.setCount(1);
+
+                        ItemStack remaining = addItem(simplyHopperSource, hopper, toTransfer, pullDir);
+                        if (remaining.isEmpty()) {
+                            stackInSource.shrink(1);
+                            source.setChanged();
+                            return true;
+                        }
+                    }
+                }
+            } else if (!stackInSource.isEmpty() && hopper.canPlaceItem(stackInSource)) {
                 ItemStack toTransfer = stackInSource.copy();
                 toTransfer.setCount(1);
-
-                LOGGER.debug("Trying to pull {} as {}", stackInSource, toTransfer);
-                System.out.println("Trying to pull "+stackInSource+" as "+toTransfer);
 
                 ItemStack remaining = addItem(source, hopper, toTransfer, pullDir);
                 if (remaining.isEmpty()) {
@@ -239,7 +235,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
 
     public static void entityInside(Level pLevel, BlockPos pPos, BlockState pState, Entity pEntity, SimplyHopperBlockEntity pBlockEntity) {
         if (pEntity instanceof ItemEntity itementity) {
-            if (!itementity.getItem().isEmpty() && Shapes.joinIsNotEmpty(Shapes.create(pEntity.getBoundingBox().move((double)(-pPos.getX()), (double)(-pPos.getY()), (double)(-pPos.getZ()))), pBlockEntity.getSuckShape(), BooleanOp.AND)) {
+            if (!itementity.getItem().isEmpty() && Shapes.joinIsNotEmpty(Shapes.create(pEntity.getBoundingBox().move((double) (-pPos.getX()), (double) (-pPos.getY()), (double) (-pPos.getZ()))), pBlockEntity.getSuckShape(), BooleanOp.AND)) {
                 tryMoveItems(pLevel, pPos, pState, pBlockEntity, () -> addItem(pBlockEntity, itementity));
             }
         }
@@ -247,7 +243,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
 
     @Override
     public boolean canTakeItem(@NotNull Container pTarget, int pIndex, @NotNull ItemStack pStack) {
-        return acceptTakeAttempt(pTarget,pIndex,pStack);
+        return acceptTakeAttempt(pTarget, pIndex, pStack);
     }
 
 
@@ -256,7 +252,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
             return false; // No target or empty stack
         }
         for (int i = 0; i < this.getContainerSize(); i++) {
-            if(acceptTakeAttempt(pTarget, i, pStack)){
+            if (acceptTakeAttempt(pTarget, i, pStack)) {
                 return true;
             }
         }
@@ -265,7 +261,6 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
     }
 
     /**
-     *
      * @param pIndex
      * @param pStack
      * @return
@@ -274,8 +269,8 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         if (pTarget == null || pStack.isEmpty()) {
             return false; // No target or empty stack
         }
-        if(pTarget instanceof SimplyHopperBlockEntity targetBE) {
-            if(pStack.getCount() >= targetBE.getMinimalStackSize() && ItemStack.isSameItemSameTags(pStack, pTarget.getItem(pIndex))) {
+        if (pTarget instanceof SimplyHopperBlockEntity targetBE) {
+            if (pStack.getCount() >= targetBE.getMinimalStackSize() && ItemStack.isSameItemSameTags(pStack, pTarget.getItem(pIndex))) {
                 return true;
             }
             return false;
@@ -285,7 +280,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
 
     @Override
     public boolean canPlaceItem(int pIndex, @NotNull ItemStack pStack) {
-        return canAccept(pIndex,pStack);
+        return canAccept(pIndex, pStack);
     }
 
     public boolean canPlaceItem(@NotNull ItemStack pStack) {
@@ -297,33 +292,27 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
      */
     private boolean canAccept(ItemStack stack) {
         if (stack.isEmpty()) {
-        return false; // Don't accept empty stacks
-    }
+            return false; // Don't accept empty stacks
+        }
 
         for (int i = 0; i < this.getContainerSize(); i++) {
-            if(canAccept(i, stack)){
+            if (canAccept(i, stack)) {
                 return true;
             }
         }
         return false; // If no slots match, return false
     }
-    private boolean canAccept(int pIndex,ItemStack stack) {
+
+    private boolean canAccept(int pIndex, ItemStack stack) {
         if (stack.isEmpty()) {
             return false; // Don't accept empty stacks
         }
 
-//        for (int i = 0; i < this.getContainerSize(); i++) {
-            ItemStack slotStack = this.getItem(pIndex);
+        ItemStack slotStack = this.getItem(pIndex);
 
-            LOGGER.info("Checking slot {}: {} for acceptance of {}",slotStack,ItemStack.isSameItemSameTags(slotStack, stack),stack);
-            System.out.println("Checking slot "+pIndex+": "+slotStack+" for acceptance of "+stack);
-
-            if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, stack) && slotStack.getCount() < stack.getMaxStackSize()) {
-                LOGGER.info("Accepted {} in slot {}", stack, pIndex);
-                System.out.println("Accepted "+stack+" in slot "+pIndex);
-                return true;
-            }
-//        }
+        if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, stack) && slotStack.getCount() < stack.getMaxStackSize()) {
+            return true;
+        }
         return false;
     }
 
@@ -335,7 +324,7 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         for (ItemEntity itemEntity : itemsAndAbove) {
             ItemStack entityStack = itemEntity.getItem();
 
-            if (canPlaceItem(itemsAndAbove.indexOf(itemEntity),entityStack)) {
+            if (canPlaceItem(itemsAndAbove.indexOf(itemEntity), entityStack)) {
                 ItemStack remaining = addItem(new SimpleContainer(entityStack), this, entityStack.copy(), Direction.DOWN);
 
                 if (remaining.isEmpty()) {
@@ -356,8 +345,15 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         return getContainerAt(pLevel, hopperPos);
     }
 
+    @Nullable
+    private static Container getContainerBelow(Level pLevel, SimplyHopperBlockEntity pHopper) {
+        BlockPos hopperPos = pHopper.getBlockPos().relative(Direction.Axis.Y, (int) -1.0D);
+        return getContainerAt(pLevel, hopperPos);
+    }
+
+
     private boolean inventoryFull() {
-        for(ItemStack itemstack : this.getItems()) {
+        for (ItemStack itemstack : this.getItems()) {
             if (itemstack.isEmpty() || itemstack.getCount() < itemstack.getMaxStackSize()) {
                 return false;
             }
@@ -378,61 +374,61 @@ public class SimplyHopperBlockEntity extends RandomizableContainerBlockEntity im
         return this.tickedGameTime;
     }
 
-@Override
-public boolean isEmpty() {
-    for (ItemStack stack : items) {
-        if (!stack.isEmpty()) return false;
+    @Override
+    public boolean isEmpty() {
+        for (ItemStack stack : items) {
+            if (!stack.isEmpty()) return false;
+        }
+        return true;
     }
-    return true;
-}
 
-@Override
-protected @NotNull NonNullList<ItemStack> getItems() {
-    return items;
-}
+    @Override
+    protected @NotNull NonNullList<ItemStack> getItems() {
+        return items;
+    }
 
-@Override
-protected void setItems(@NotNull NonNullList<ItemStack> items) {
-    this.items = items;
-}
+    @Override
+    protected void setItems(@NotNull NonNullList<ItemStack> items) {
+        this.items = items;
+    }
 
-@Override
-protected @NotNull Component getDefaultName() {
-    return Component.translatable("block.simplyhopper.simply_hopper");
-}
+    @Override
+    protected @NotNull Component getDefaultName() {
+        return Component.translatable("block.simplyhopper.simply_hopper");
+    }
 
     @Override
     protected @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory playerInventory) {
         return new HopperMenu(id, playerInventory, this);
     }
 
-@Override
-public int getContainerSize() {
-    return SLOT_COUNT;
-}
+    @Override
+    public int getContainerSize() {
+        return SLOT_COUNT;
+    }
 
-@Override
-public void load(@NotNull CompoundTag tag) {
-    super.load(tag);
-    this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
-    ContainerHelper.loadAllItems(tag, this.items);
-    this.cooldownTime = tag.getInt("Cooldown");
-}
+    @Override
+    public void load(@NotNull CompoundTag tag) {
+        super.load(tag);
+        this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
+        ContainerHelper.loadAllItems(tag, this.items);
+        this.cooldownTime = tag.getInt("Cooldown");
+    }
 
-@Override
-protected void saveAdditional(@NotNull CompoundTag tag) {
-    super.saveAdditional(tag);
-    ContainerHelper.saveAllItems(tag, this.items);
-    tag.putInt("Cooldown", this.cooldownTime);
-}
+    @Override
+    protected void saveAdditional(@NotNull CompoundTag tag) {
+        super.saveAdditional(tag);
+        ContainerHelper.saveAllItems(tag, this.items);
+        tag.putInt("Cooldown", this.cooldownTime);
+    }
 
     public @NotNull ItemStack removeItem(int pIndex, int pCount) {
-        this.unpackLootTable((Player)null);
+        this.unpackLootTable((Player) null);
         return ContainerHelper.removeItem(this.getItems(), pIndex, pCount);
     }
 
-    public void setItem(int pIndex, ItemStack pStack) {
-        this.unpackLootTable((Player)null);
+    public void setItem(int pIndex, @NotNull ItemStack pStack) {
+        this.unpackLootTable((Player) null);
         this.getItems().set(pIndex, pStack);
         if (pStack.getCount() > this.getMaxStackSize()) {
             pStack.setCount(this.getMaxStackSize());
@@ -445,7 +441,7 @@ protected void saveAdditional(@NotNull CompoundTag tag) {
      */
     @Override
     public double getLevelX() {
-        return (double)this.worldPosition.getX() + 0.5D;
+        return (double) this.worldPosition.getX() + 0.5D;
     }
 
     /**
@@ -453,7 +449,7 @@ protected void saveAdditional(@NotNull CompoundTag tag) {
      */
     @Override
     public double getLevelY() {
-        return (double)this.worldPosition.getY() + 0.5D;
+        return (double) this.worldPosition.getY() + 0.5D;
     }
 
     /**
@@ -461,6 +457,6 @@ protected void saveAdditional(@NotNull CompoundTag tag) {
      */
     @Override
     public double getLevelZ() {
-        return (double)this.worldPosition.getZ() + 0.5D;
+        return (double) this.worldPosition.getZ() + 0.5D;
     }
 }
