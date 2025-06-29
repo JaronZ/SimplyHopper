@@ -403,11 +403,6 @@ protected @NotNull Component getDefaultName() {
 }
 
     @Override
-    public @NotNull Component getDisplayName() {
-        return Component.translatable("menu.title.simplyhopper.simply_hopper"); // or your own name
-    }
-
-    @Override
     protected @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory playerInventory) {
         return new HopperMenu(id, playerInventory, this);
     }
