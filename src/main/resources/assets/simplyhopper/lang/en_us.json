@@ -1,4 +1,6 @@
 {
   "block.simplyhopper.simply_hopper": "Simply Hopper",
-  "itemGroup.simply_hopper": "Simply Hopper"
+  "itemGroup.simply_hopper": "Simply Hopper",
+  "item.simplyhopper.simply_hopper_minecart": "Minecart with Simply Hopper",
+  "entity.simplyhopper.simply_hopper_minecart": "Minecart with Simply Hopper"
 }
