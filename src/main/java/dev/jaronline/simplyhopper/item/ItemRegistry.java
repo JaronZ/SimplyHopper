@@ -17,7 +17,7 @@ public class ItemRegistry {
         ITEMS.register(eventBus);
     }
 
-    public static RegistryObject<BlockItem> registerBlockItem(String name, Supplier<BlockItem> blockItem) {
+    public static <T extends BlockItem> RegistryObject<T> registerBlockItem(String name, Supplier<T> blockItem) {
         return ITEMS.register(name, blockItem);
     }
 }

@@ -4,11 +4,11 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.RegistryObject;
 
-public class RegistryBlockItem<T extends Block> {
+public class RegistryBlockItem<T extends Block, R extends BlockItem> {
     private final RegistryObject<T> block;
-    private final RegistryObject<BlockItem> blockItem;
+    private final RegistryObject<R> blockItem;
 
-    RegistryBlockItem(RegistryObject<T> block, RegistryObject<BlockItem> blockItem) {
+    RegistryBlockItem(RegistryObject<T> block, RegistryObject<R> blockItem) {
         this.block = block;
         this.blockItem = blockItem;
     }
@@ -17,15 +17,15 @@ public class RegistryBlockItem<T extends Block> {
         return block;
     }
 
-    public Block getBlock() {
+    public T getBlock() {
         return block.get();
     }
 
-    public RegistryObject<BlockItem> getRegistryBlockItem() {
+    public RegistryObject<R> getRegistryBlockItem() {
         return blockItem;
     }
 
-    public BlockItem getBlockItem() {
+    public R getBlockItem() {
         return blockItem.get();
     }
 }
