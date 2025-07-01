@@ -1,8 +1,12 @@
 package dev.jaronline.simplyhopper.item;
 
 import dev.jaronline.simplyhopper.SimplyHopper;
+import dev.jaronline.simplyhopper.entity.SimplyHopperBlockEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.MinecartItem;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -19,5 +23,9 @@ public class ItemRegistry {
 
     public static RegistryObject<BlockItem> registerBlockItem(String name, Supplier<BlockItem> blockItem) {
         return ITEMS.register(name, blockItem);
+    }
+
+    public static <T extends MinecartItem> RegistryObject<T> registerMinecartItem(String name, Supplier<T> minecartItem) {
+        return ITEMS.register(name, minecartItem);
     }
 }

@@ -3,9 +3,12 @@ package dev.jaronline.simplyhopper;
 import com.mojang.logging.LogUtils;
 import dev.jaronline.simplyhopper.block.BlockRegistry;
 import dev.jaronline.simplyhopper.block.entity.BlockEntityRegistry;
+import dev.jaronline.simplyhopper.entity.EntityRegistry;
 import dev.jaronline.simplyhopper.gui.CreativeTabRegistry;
-import dev.jaronline.simplyhopper.gui.MenuTypeRegistry;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.entity.MinecartRenderer;
 import dev.jaronline.simplyhopper.item.ItemRegistry;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -29,6 +32,7 @@ public class SimplyHopper {
 
         BlockRegistry.register(modEventBus);
         BlockEntityRegistry.register(modEventBus);
+        EntityRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
         CreativeTabRegistry.register(modEventBus);
 //        MenuTypeRegistry.register(modEventBus);
@@ -50,6 +54,12 @@ public class SimplyHopper {
         @SubscribeEvent
         public static void onClientSetup(final FMLClientSetupEvent event) {
             LOGGER.info("Client setup");
+            event.enqueueWork(()->{
+                EntityRenderers.register(
+                        EntityRegistry.SIMPLY_HOPPER_MINECART.getEntity(),
+                        context -> new MinecartRenderer<>(context, ModelLayers.MINECART)
+                );
+            });
         }
     }
 }

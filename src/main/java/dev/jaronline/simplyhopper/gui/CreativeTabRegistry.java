@@ -1,8 +1,11 @@
 package dev.jaronline.simplyhopper.gui;
 
 import dev.jaronline.simplyhopper.block.BlockRegistry;
+import dev.jaronline.simplyhopper.entity.EntityRegistry;
+import dev.jaronline.simplyhopper.item.ItemRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -16,11 +19,12 @@ public class CreativeTabRegistry {
 
     static {
         CREATIVE_MODE_TABS.register(
-            "simply_hopper_tab", () -> CreativeModeTab.builder()
+                "simply_hopper_tab", () -> CreativeModeTab.builder()
                         .title(Component.translatable("itemGroup.simply_hopper"))
                         .icon(() -> BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem().getDefaultInstance())
                         .displayItems((parameters, output) -> {
                             output.accept(BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem());
+                            output.accept(EntityRegistry.SIMPLY_HOPPER_MINECART.getItem());
                         })
                         .build());
     }
@@ -31,7 +35,9 @@ public class CreativeTabRegistry {
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS)
+        if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
             event.accept(BlockRegistry.SIMPLY_HOPPER_BLOCK.getBlockItem());
+            event.accept(EntityRegistry.SIMPLY_HOPPER_MINECART.getItem());
+        }
     }
 }

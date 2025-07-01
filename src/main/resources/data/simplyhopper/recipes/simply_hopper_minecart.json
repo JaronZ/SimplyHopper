@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "simply_hopper",
+  "ingredients": [
+    {
+      "item": "simplyhopper:simply_hopper"
+    },
+    {
+      "item": "minecraft:minecart"
+    }
+  ],
+  "result": {
+    "item": "simplyhopper:simply_hopper_minecart"
+  }
+}
