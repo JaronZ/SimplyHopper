@@ -16,12 +16,18 @@ import java.util.function.Supplier;
 
 public class BlockRegistry {
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, SimplyHopper.MOD_ID);
+    public static final DeferredRegister<Block> VANILLA_BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "minecraft");
 
     public static final RegistryBlockItem<Block> SIMPLY_HOPPER_BLOCK = registerBlock("simply_hopper",
             () -> new SimplyHopperBlock(BlockBehaviour.Properties.copy(Blocks.HOPPER)));
 
+    static {
+        VANILLA_BLOCKS.register("redstone_wire", () -> new RedStoneWireBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_WIRE)));
+    }
+
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);
+        VANILLA_BLOCKS.register(eventBus);
     }
 
     private static <T extends Block> RegistryBlockItem<T> registerBlock(String name, Supplier<T> block) {
